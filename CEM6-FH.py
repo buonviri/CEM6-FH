@@ -10,6 +10,7 @@ panel_tab_radius = 1.27                  # corner radius of PCIe bracket mountin
 panel_pilot_dia = 2.05                   # pilot hole diameter
 
 pwb_thickness = 1.57  # should not change
+z = App.Vector(0,0,1)  # fixed vector +z
 
 doc = App.newDocument()  # create empty doc
 
@@ -18,6 +19,8 @@ pwb.addGeometry(Part.LineSegment(App.Vector( 0.0,   4.50, 0), App.Vector(15.0,  
 pwb.addGeometry(Part.LineSegment(App.Vector(15.0,   4.50, 0), App.Vector(15.0, 111.15, 0)), False)  # east edge
 pwb.addGeometry(Part.LineSegment(App.Vector(15.0, 111.15, 0), App.Vector( 0.0, 111.15, 0)), False)  # north edge
 pwb.addGeometry(Part.LineSegment(App.Vector( 0.0, 111.15, 0), App.Vector( 0.0,   4.50, 0)), False)  # west edge
+pwb.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_lower, 0), z, panel_pilot_dia/2), False)  # lower hole
+pwb.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_upper, 0), z, panel_pilot_dia/2), False)  # upper hole
 pwb.Label = "PWB"  # relabel
 pwb.Visibility = False  # hide sketch
 
