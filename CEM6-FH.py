@@ -8,10 +8,13 @@ panel_tab_width = 7.95                   # width of PCIe bracket mounting tab
 panel_tab_length = panel_tab_width       # length (but really, half of this value past the mounting hole)
 panel_tab_radius = 1.27                  # corner radius of PCIe bracket mounting tab
 panel_pilot_dia = 2.05                   # pilot hole diameter
+panel_TAE_OD = 4.00                      # tap and extrude outside diameter
+panel_TAE_length = 2.50                  # length below PWB surface (2.67 max)
 panel_pwb_overlap = 1.00                 # distance that the web between tabs extends past the PWB outline
 
-pwb_thickness = 1.57  # should not change
-z = App.Vector(0,0,1)  # fixed vector +z
+pwb_thickness = 1.57    # per spec
+panel_thickness = 0.86  # per spec
+z = App.Vector(0,0,1)   # fixed vector +z
 
 doc = App.newDocument()  # create empty doc
 
@@ -35,37 +38,50 @@ s = panel_y_lower - panel_tab_width/2  # min y
 n = panel_y_upper + panel_tab_width/2  # max y
 w = 0.0                                # aligned with card edge
 e = panel_x_both + panel_tab_length/2  # max x
-tabs = doc.addObject("Sketcher::SketchObject", "sketch_Tab")  # create sketch for tabs boundary
-tabs.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False)  # south edge
-tabs.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
-tabs.addGeometry(Part.LineSegment(App.Vector(e, n, 0), App.Vector(w, n, 0)), False)  # north edge
-tabs.addGeometry(Part.LineSegment(App.Vector(w, n, 0), App.Vector(w, s, 0)), False)  # west edge
-tabs.adjustRelativeLinks(bracket)  # start of sketch move to body
-tabs.Visibility = False  # hide sketch
-bracket.ViewObject.dropObject(tabs,None,'',[])  # end of sketch move to body
+sk = doc.addObject("Sketcher::SketchObject", "sketch_Tab")  # create sketch
+sk.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False)  # south edge
+sk.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
+sk.addGeometry(Part.LineSegment(App.Vector(e, n, 0), App.Vector(w, n, 0)), False)  # north edge
+sk.addGeometry(Part.LineSegment(App.Vector(w, n, 0), App.Vector(w, s, 0)), False)  # west edge
+sk.adjustRelativeLinks(bracket)  # start of sketch move to body
+sk.Visibility = False  # hide sketch
+bracket.ViewObject.dropObject(sk,None,'',[])  # end of sketch move to body
 ptabs = bracket.newObject('PartDesign::Pad','Tabs')  # create new Pad
-ptabs.Profile = tabs  # set Pad profile to sketch
-ptabs.Length = 0.68  # set thickness of Pad
+ptabs.Profile = sk  # set Pad profile to sketch
+ptabs.Length = panel_thickness  # set thickness of Pad
 ptabs.Reversed = 1  # extrude Pad downward
+
+# tap and extrude
+sk = doc.addObject("Sketcher::SketchObject", "sketch_TapAndExtrude")  # create sketch
+sk.Placement = App.Placement(App.Vector(0.00, 0.00, -0.860000), App.Rotation(0.0, 0.0, 0.0, 1.0))
+sk.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_lower, 0), z, panel_TAE_OD/2), False)  # lower hole
+sk.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_upper, 0), z, panel_TAE_OD/2), False)  # upper hole
+sk.adjustRelativeLinks(bracket)  # start of sketch move to body
+sk.Visibility = False  # hide sketch
+bracket.ViewObject.dropObject(sk,None,'',[])  # end of sketch move to body
+ptap_and_extrude = bracket.newObject('PartDesign::Pad','TapAndExtrude')  # create new Pad
+ptap_and_extrude.Profile = sk  # set Pad profile to sketch
+ptap_and_extrude.Length = panel_TAE_length - panel_thickness  # set thickness of Pad
+ptap_and_extrude.Reversed = 1  # extrude Pad downward
 
 # bracket cutout
 s = panel_y_lower + panel_tab_width/2  # min y
 n = panel_y_upper - panel_tab_width/2  # max y
 w = panel_pwb_overlap                  # min x
 e = panel_x_both + panel_tab_length/2  # max x
-tabcut = doc.addObject("Sketcher::SketchObject", "sketch_TabCut")  # create sketch for tabs boundary
-tabcut.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False)  # south edge
-tabcut.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
-tabcut.addGeometry(Part.LineSegment(App.Vector(e, n, 0), App.Vector(w, n, 0)), False)  # north edge
-tabcut.addGeometry(Part.LineSegment(App.Vector(w, n, 0), App.Vector(w, s, 0)), False)  # west edge
-tabcut.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_lower, 0), z, panel_pilot_dia/2), False)  # lower hole
-tabcut.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_upper, 0), z, panel_pilot_dia/2), False)  # upper hole
-tabcut.adjustRelativeLinks(bracket)  # start of sketch move to body
-tabcut.Visibility = False  # hide sketch
-bracket.ViewObject.dropObject(tabcut,None,'',[])  # end of sketch move to body
+sk = doc.addObject("Sketcher::SketchObject", "sketch_TabCut")  # create sketch
+sk.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False)  # south edge
+sk.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
+sk.addGeometry(Part.LineSegment(App.Vector(e, n, 0), App.Vector(w, n, 0)), False)  # north edge
+sk.addGeometry(Part.LineSegment(App.Vector(w, n, 0), App.Vector(w, s, 0)), False)  # west edge
+sk.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_lower, 0), z, panel_pilot_dia/2), False)  # lower hole
+sk.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_upper, 0), z, panel_pilot_dia/2), False)  # upper hole
+sk.adjustRelativeLinks(bracket)  # start of sketch move to body
+sk.Visibility = False  # hide sketch
+bracket.ViewObject.dropObject(sk,None,'',[])  # end of sketch move to body
 ptabcut = bracket.newObject('PartDesign::Pocket','TabCut')  # create new Pocket
-ptabcut.Profile = tabcut  # set Pocket profile to sketch
-ptabcut.Length = 0.68  # set thickness of Pocket
+ptabcut.Profile = sk  # set Pocket profile to sketch
+ptabcut.Length = panel_TAE_length  # set thickness of Pocket
 ptabcut.Reversed = 0  # not sure why Pocket doesn't need to be reversed like Pad
 
 doc.recompute()  # redraw
