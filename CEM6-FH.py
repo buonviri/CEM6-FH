@@ -35,8 +35,7 @@ s = panel_y_lower - panel_tab_width/2  # min y
 n = panel_y_upper + panel_tab_width/2  # max y
 w = 0.0                                # aligned with card edge
 e = panel_x_both + panel_tab_length/2  # max x
-tabs = doc.addObject("Sketcher::SketchObject", "Sketch")  # create sketch for tabs boundary
-tabs.Label = "Tab Sketch"  # relabel
+tabs = doc.addObject("Sketcher::SketchObject", "sketch_Tab")  # create sketch for tabs boundary
 tabs.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False)  # south edge
 tabs.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
 tabs.addGeometry(Part.LineSegment(App.Vector(e, n, 0), App.Vector(w, n, 0)), False)  # north edge
@@ -54,8 +53,7 @@ s = panel_y_lower + panel_tab_width/2  # min y
 n = panel_y_upper - panel_tab_width/2  # max y
 w = panel_pwb_overlap                  # min x
 e = panel_x_both + panel_tab_length/2  # max x
-tabcut = doc.addObject("Sketcher::SketchObject", "Sketch")  # create sketch for tabs boundary
-tabcut.Label = "TabCut Sketch"  # relabel
+tabcut = doc.addObject("Sketcher::SketchObject", "sketch_TabCut")  # create sketch for tabs boundary
 tabcut.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False)  # south edge
 tabcut.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
 tabcut.addGeometry(Part.LineSegment(App.Vector(e, n, 0), App.Vector(w, n, 0)), False)  # north edge
