@@ -13,6 +13,7 @@ panel_TAE_length = 2.50                  # length below PWB surface (2.67 max)
 panel_pwb_overlap = 1.00                 # distance that the web between tabs extends past the PWB outline
 panel_bend_radius = 0.3                  # inside radius of 'square' sheet metal bend
 panel_outer_face = 1.90                  # controlling dimension in CEM6
+panel_strain_relief = 0.5                # radius of strain relief notches
 
 # defined in spec, do not edit
 pwb_thickness = 1.57
@@ -113,9 +114,7 @@ w = -(panel_inner_face - panel_bend_radius)
 e = 0.0
 ni =  n + panel_bend_radius  # north after inside radius
 wi =  w - panel_bend_radius  # west after inside radius
-
 sk = doc.addObject("Sketcher::SketchObject", "sketch_TabRadius")  # create sketch
-# sk.Placement = App.Placement(App.Vector(0.0, panel_y_lower - panel_tab_width/2, 0.0),  App.Rotation(0.707107, 0.000000, 0.000000, 0.707107))
 sk.Placement = App.Placement(App.Vector(0.0, panel_y_lower - panel_tab_width/2, 0.0),  App.Rotation(0,0,90), v0)
 sk.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False)  # south edge
 sk.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
@@ -134,6 +133,18 @@ ptab_radius = bracket.newObject('PartDesign::Pad','TabRadius')  # create new Pad
 ptab_radius.Profile = sk  # set Pad profile to sketch
 ptab_radius.Length = panel_y_upper - panel_y_lower + panel_tab_width  # set thickness of Pad
 ptab_radius.Reversed = 1  # extrude Pad downward
+
+# five degree interface
+n = panel_tab_to_upper
+s = panel_bend_radius + panel_strain_relief
+e = panel_y_lower - panel_tab_width/2
+w = 0
+sk = doc.addObject("Sketcher::SketchObject", "sketch_FiveChamfer")  # create sketch
+sk.Placement = App.Placement(App.Vector(-1.900000, 0.000000, 0.000000), App.Rotation(0.500000, 0.500000, 0.500000, 0.500000))
+sk.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False)  # south edge
+sk.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
+sk.addGeometry(Part.LineSegment(App.Vector(e, n, 0), App.Vector(w, n, 0)), False)  # north edge
+sk.addGeometry(Part.LineSegment(App.Vector(w, n, 0), App.Vector(w, s, 0)), False)  # west edge
 
 doc.recompute()  # redraw
 Gui.SendMsgToActiveView("ViewFit")  # fit all
