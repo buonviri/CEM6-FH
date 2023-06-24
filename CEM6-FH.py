@@ -23,6 +23,8 @@ panel_tab_to_upper = 17.15
 panel_bend_outside = panel_bend_radius + panel_thickness
 panel_inner_face = panel_outer_face - panel_thickness
 
+# constants
+py = 3.14159265358979323846
 v0 = App.Vector(0,0,0)   # fixed vector, origin
 vz = App.Vector(0,0,1)   # fixed vector, +z
 
@@ -48,10 +50,15 @@ s = panel_y_lower - panel_tab_width/2  # min y
 n = panel_y_upper + panel_tab_width/2  # max y
 w = 0.0                                # aligned with card edge
 e = panel_x_both + panel_tab_length/2  # max x
+eminus = e - panel_tab_radius          # max x minus radius
+splus = s + panel_tab_radius           # min y plus radius
+nminus = n - panel_tab_radius          # max y minus radius
 sk = doc.addObject("Sketcher::SketchObject", "sketch_Tab")  # create sketch
-sk.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False)  # south edge
-sk.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
-sk.addGeometry(Part.LineSegment(App.Vector(e, n, 0), App.Vector(w, n, 0)), False)  # north edge
+sk.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(eminus, s, 0)), False)  # south edge
+sk.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(eminus, splus, 0), vz, panel_tab_radius), -py/2.0, 0.0),False)  # corner arc
+sk.addGeometry(Part.LineSegment(App.Vector(e, splus, 0), App.Vector(e, nminus, 0)), False)  # east edge
+sk.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(eminus, nminus, 0), vz, panel_tab_radius), 0.0, +py/2.0),False)  # corner arc
+sk.addGeometry(Part.LineSegment(App.Vector(eminus, n, 0), App.Vector(w, n, 0)), False)  # north edge
 sk.addGeometry(Part.LineSegment(App.Vector(w, n, 0), App.Vector(w, s, 0)), False)  # west edge
 sk.adjustRelativeLinks(bracket)  # start of sketch move to body
 sk.Visibility = False  # hide sketch
@@ -79,10 +86,15 @@ s = panel_y_lower + panel_tab_width/2  # min y
 n = panel_y_upper - panel_tab_width/2  # max y
 w = panel_pwb_overlap                  # min x
 e = panel_x_both + panel_tab_length/2  # max x
+eminus = e - panel_tab_radius          # max x minus radius
+nplus = n + panel_tab_radius           # max y plus radius
+sminus = s - panel_tab_radius          # min y minus radius
 sk = doc.addObject("Sketcher::SketchObject", "sketch_TabCut")  # create sketch
-sk.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False)  # south edge
-sk.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
-sk.addGeometry(Part.LineSegment(App.Vector(e, n, 0), App.Vector(w, n, 0)), False)  # north edge
+sk.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(eminus, s, 0)), False)  # south edge
+sk.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(eminus, sminus, 0), vz, panel_tab_radius), 0.0, py/2.0),False)  # corner arc
+sk.addGeometry(Part.LineSegment(App.Vector(e, sminus, 0), App.Vector(e, nplus, 0)), False)  # east edge
+sk.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(eminus, nplus, 0), vz, panel_tab_radius), -py/2.0, 0.0),False)  # corner arc
+sk.addGeometry(Part.LineSegment(App.Vector(eminus, n, 0), App.Vector(w, n, 0)), False)  # north edge
 sk.addGeometry(Part.LineSegment(App.Vector(w, n, 0), App.Vector(w, s, 0)), False)  # west edge
 sk.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_lower, 0), vz, panel_pilot_dia/2), False)  # lower hole
 sk.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_upper, 0), vz, panel_pilot_dia/2), False)  # upper hole
@@ -109,12 +121,12 @@ sk.addGeometry(Part.LineSegment(App.Vector(w, s, 0), App.Vector(e, s, 0)), False
 sk.addGeometry(Part.LineSegment(App.Vector(e, s, 0), App.Vector(e, n, 0)), False)  # east edge
 sk.addGeometry(Part.LineSegment(App.Vector(e, n, 0), App.Vector(w, n, 0)), False)  # north edge
 # sk.addGeometry(Part.LineSegment(App.Vector(w, n, 0), App.Vector(wi, ni, 0)), False)  # inside radius, diagonal
-sk.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(w, ni, 0), vz, panel_bend_radius),-3.1415926535898,-1.57079632679489662),False)  # inside radius, arc
+sk.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(w, ni, 0), vz, panel_bend_radius), -py, -py/2),False)  # inside radius, arc
 sk.addGeometry(Part.LineSegment(App.Vector(wi, ni, 0), App.Vector(wi, panel_tab_to_upper, 0)), False)  # vertical segment to top of spec (inner face)
 sk.addGeometry(Part.LineSegment(App.Vector(wi, panel_tab_to_upper, 0), App.Vector(wi - panel_thickness, panel_tab_to_upper, 0)), False)  # horizontal segment at top of spec
 sk.addGeometry(Part.LineSegment(App.Vector(wi - panel_thickness, panel_tab_to_upper, 0), App.Vector(wi - panel_thickness, ni, 0)), False)  # outer face
 # sk.addGeometry(Part.LineSegment(App.Vector(wi - panel_thickness, ni, 0), App.Vector(w, s, 0)), False)  # outside radius, diagonal
-sk.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(w, ni, 0), vz, panel_bend_outside),-3.1415926535898,-1.57079632679489662),False)  # outside radius, arc
+sk.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(w, ni, 0), vz, panel_bend_outside), -py, -py/2),False)  # outside radius, arc
 sk.adjustRelativeLinks(bracket)  # start of sketch move to body
 sk.Visibility = False  # hide sketch
 bracket.ViewObject.dropObject(sk,None,'',[])  # end of sketch move to body
