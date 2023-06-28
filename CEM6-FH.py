@@ -23,6 +23,7 @@ panel_tab_to_upper = 17.15
 # calculated from other parameters
 panel_bend_outside = panel_bend_radius + panel_thickness
 panel_inner_face = panel_outer_face - panel_thickness
+pwb_sides = {"Top": 0.00, "Bot": -pwb_thickness}
 
 # constants
 py = 3.14159265358979323846
@@ -32,15 +33,17 @@ vz = App.Vector(0,0,1)   # fixed vector, +z
 doc = App.newDocument()  # create empty doc
 
 # PWB outline
-pwb = doc.addObject("Sketcher::SketchObject", "Sketch")  # create sketch for PWB boundary
-pwb.addGeometry(Part.LineSegment(App.Vector( 0.0,   4.50, 0), App.Vector(15.0,   4.50, 0)), False)  # south edge
-pwb.addGeometry(Part.LineSegment(App.Vector(15.0,   4.50, 0), App.Vector(15.0, 111.15, 0)), False)  # east edge
-pwb.addGeometry(Part.LineSegment(App.Vector(15.0, 111.15, 0), App.Vector( 0.0, 111.15, 0)), False)  # north edge
-pwb.addGeometry(Part.LineSegment(App.Vector( 0.0, 111.15, 0), App.Vector( 0.0,   4.50, 0)), False)  # west edge
-pwb.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_lower, 0), vz, panel_pilot_dia/2), False)  # lower hole
-pwb.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_upper, 0), vz, panel_pilot_dia/2), False)  # upper hole
-pwb.Label = "PWB"  # relabel
-pwb.Visibility = True  # set to False to hide sketch
+for side in pwb_sides:
+    sk = doc.addObject("Sketcher::SketchObject", "Sketch")  # create sketch for PWB boundary
+    sk.Placement = App.Placement(App.Vector(0.00, 0.00, pwb_sides[side]), App.Rotation(0.0, 0.0, 0.0, 1.0))  # place sketch
+    sk.addGeometry(Part.LineSegment(App.Vector( 0.0,   4.50, 0), App.Vector(15.0,   4.50, 0)), False)  # south edge
+    sk.addGeometry(Part.LineSegment(App.Vector(15.0,   4.50, 0), App.Vector(15.0, 111.15, 0)), False)  # east edge
+    sk.addGeometry(Part.LineSegment(App.Vector(15.0, 111.15, 0), App.Vector( 0.0, 111.15, 0)), False)  # north edge
+    sk.addGeometry(Part.LineSegment(App.Vector( 0.0, 111.15, 0), App.Vector( 0.0,   4.50, 0)), False)  # west edge
+    sk.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_lower, 0), vz, panel_pilot_dia/2), False)  # lower hole
+    sk.addGeometry(Part.Circle(App.Vector(panel_x_both, panel_y_upper, 0), vz, panel_pilot_dia/2), False)  # upper hole
+    sk.Label = 'PWB (' + side + ')'  # relabel
+    sk.Visibility = True  # set to False to hide sketch
 
 # part
 bracket = doc.addObject('PartDesign::Body','Body')  # add body for entire part
