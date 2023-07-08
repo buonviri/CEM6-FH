@@ -14,11 +14,19 @@ panel_pwb_overlap = 1.00                 # distance that the web between tabs ex
 panel_bend_inside_radius = 0.3           # inside radius of 'square' sheet metal bend
 panel_outer_face = 1.90                  # controlling dimension in CEM6
 panel_strain_relief = 0.5                # radius of strain relief notches
+panel_strain_relief_offset = 0.1         # start of strain relief above tab bend
 
 # defined in spec, do not edit
 pwb_thickness = 1.57
 panel_thickness = 0.86
 panel_tab_to_upper = 17.15
+chassis_datum = 104.86
+OAL = 120.02
+OAW = 18.42
+bracket_tip_to_intercept = 5.07
+narrow_forty_five = 112.75
+height_of_forty_five = 4.115  # 4.11 in spec but that adds up to 18.41 instead of 18.42
+width_of_five_bend = 14.30 - height_of_forty_five
 
 # calculated from other parameters
 panel_bend_outside_radius = panel_bend_inside_radius + panel_thickness
@@ -85,7 +93,26 @@ v = {'Tabs':
         [ -pwb_thickness-panel_thickness,
           -pwb_thickness,
           -pwb_thickness + panel_bend_inside_radius ],
-    ]
+    ],
+    'Panel':
+    [
+        [ chassis_datum - OAL + bracket_tip_to_intercept,  # 5 bend
+          chassis_datum - narrow_forty_five,  # narrow 45
+          chassis_datum - narrow_forty_five + height_of_forty_five,  # end of 45
+          panel_y_lower - panel_tab_width/2 - 2*panel_strain_relief,  # s1
+          panel_y_lower + panel_tab_width/2 + 2*panel_strain_relief,  # s2
+          panel_y_upper - panel_tab_width/2 - 2*panel_strain_relief,  # s3
+          panel_y_upper + panel_tab_width/2 + 2*panel_strain_relief, ], # s4
+# need weird stuff 
+        [ 0,  # min
+          0,  # lower tiny 45
+          -pwb_thickness + panel_tab_to_upper - OAW,  # flange
+          -pwb_thickness + panel_bend_inside_radius,  # strain relief
+          -pwb_thickness + panel_tab_to_upper - height_of_forty_five - width_of_five_bend,  # 45
+          -pwb_thickness + panel_tab_to_upper - height_of_forty_five,  # 45
+          0,  # upper tiny 45
+          -pwb_thickness + panel_tab_to_upper, ],
+    ],
     }
 
 # mounting tabs
@@ -187,16 +214,22 @@ feature.Length = thickness  # set thickness of Pad
 feature.Reversed = 1  # extrude Pad downward
 
 # panel
-x = [v['Tabs'][1][0],v['Tabs'][1][9]]  # need to add to master dict
-y = [v['BendForTabs'][1][2], panel_tab_to_upper - pwb_thickness]  # same
 name = 'Panel'
 thickness = panel_thickness
+x = v[name][0]
+y = v[name][1]
 sk = doc.addObject('Sketcher::SketchObject', 'sketch' + name)  # create sketch
 sk.Placement = App.Placement(App.Vector(-panel_outer_face, 0.0, 0.0), planeYZ)  # place sketch
-sk.addGeometry(Part.LineSegment(App.Vector(x[0], y[0], 0), App.Vector(x[-1], y[0], 0)), False)  # boundary
-sk.addGeometry(Part.LineSegment(App.Vector(x[-1], y[0], 0), App.Vector(x[-1], y[-1], 0)), False)  # boundary
-sk.addGeometry(Part.LineSegment(App.Vector(x[-1], y[-1], 0), App.Vector(x[0], y[-1], 0)), False)  # boundary
-sk.addGeometry(Part.LineSegment(App.Vector(x[0], y[-1], 0), App.Vector(x[0], y[0], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[6], y[3], 0), App.Vector(x[3], y[3], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[3], y[3], 0), App.Vector(x[3], y[2], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[3], y[2], 0), App.Vector(x[2], y[2], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[2], y[2], 0), App.Vector(x[1], y[4], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[1], y[4], 0), App.Vector(x[0], y[4], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[0], y[4], 0), App.Vector(x[0], y[5], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[0], y[5], 0), App.Vector(x[1], y[5], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[1], y[5], 0), App.Vector(x[2], y[7], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[2], y[7], 0), App.Vector(x[6], y[7], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[6], y[7], 0), App.Vector(x[6], y[3], 0)), False)  # boundary
 sk.adjustRelativeLinks(bracket)  # start of sketch move to body
 sk.Visibility = False  # hide sketch
 bracket.ViewObject.dropObject(sk,None,'',[])  # end of sketch move to body
