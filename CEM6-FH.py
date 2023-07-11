@@ -21,7 +21,7 @@ pwb_thickness = 1.57
 panel_thickness = 0.86
 panel_tab_to_upper = 17.15
 chassis_datum = 104.86
-OAL = 120.02
+OAL = 120.02  # -15.16 absolute
 OAW = 18.42
 bracket_tip_to_intercept = 5.07
 narrow_forty_five = 112.75
@@ -40,12 +40,19 @@ vz = App.Vector(0,0,1)   # fixed vector, +z
 planeXY = App.Rotation(0.0, 0.0, 0.0, 1.0)
 planeXZ = App.Rotation(0,0,90)  # requires ', v0' to be appended
 planeYZ = App.Rotation(0.5, 0.5, 0.5, 0.5)
+tanfive = 0.08748866352592400522201866943496
+sinfive = 0.08715574274765817355806427083747
+cosfive = 0.99619469809174553229501040247389
 
 # quadrants
 Q0 = 0.0
 Q1 = py/2
 Q2 = py
 Q3 = -py/2
+
+# five degree calcs
+tip_dy = panel_thickness * sinfive
+tip_dx = (bracket_tip_to_intercept - tip_dy) * tanfive
 
 doc = App.newDocument()  # create empty doc
 
@@ -112,6 +119,20 @@ v = {'Tabs':
           -pwb_thickness + panel_tab_to_upper - height_of_forty_five,  # 45
           0,  # upper tiny 45
           -pwb_thickness + panel_tab_to_upper, ],
+    ],
+    'FiveBend':
+    # base = 5.07, angle = 5 degrees, elevation = base*tan(5) = .444
+    # thickness angle: sin(5) = offset/thickness, therefore offset = 0.86*0.087 = 0.075
+    
+    [
+        [ -panel_outer_face - tip_dx,  # outer tip
+          -panel_outer_face,  # outer face
+          -panel_outer_face - tip_dx + panel_thickness * cosfive,  # inner tip
+          -panel_inner_face, ],  # inner face
+        [ chassis_datum - OAL + bracket_tip_to_intercept,  # ymax
+          chassis_datum - OAL + bracket_tip_to_intercept - tip_dy,  # knuckle
+          chassis_datum - OAL + tip_dy,  # y of outer tip
+          chassis_datum - OAL, ],  # ymin
     ],
     }
 
@@ -237,9 +258,37 @@ feature = bracket.newObject('PartDesign::Pad',name)  # create new Pad
 feature.Profile = sk  # set Pad profile to sketch
 feature.Length = thickness  # set thickness of Pad
 feature.Reversed = 0  # extrude Pad inward
+next_plane = y[5]
+
+# 5 degree bend
+name = 'FiveBend'
+thickness = width_of_five_bend
+x = v[name][0]
+y = v[name][1]
+sk = doc.addObject('Sketcher::SketchObject', 'sketch' + name)  # create sketch
+sk.Placement = App.Placement(App.Vector(0.0, 0.0, next_plane), planeXY)  # place sketch
+sk.addGeometry(Part.LineSegment(App.Vector(x[3], y[0], 0), App.Vector(x[1], y[0], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[1], y[0], 0), App.Vector(x[0], y[2], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[0], y[2], 0), App.Vector(x[2], y[3], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[2], y[3], 0), App.Vector(x[3], y[1], 0)), False)  # boundary
+sk.addGeometry(Part.LineSegment(App.Vector(x[3], y[1], 0), App.Vector(x[3], y[0], 0)), False)  # boundary
+sk.adjustRelativeLinks(bracket)  # start of sketch move to body
+sk.Visibility = False  # hide sketch
+bracket.ViewObject.dropObject(sk,None,'',[])  # end of sketch move to body
+feature = bracket.newObject('PartDesign::Pad',name)  # create new Pad
+feature.Profile = sk  # set Pad profile to sketch
+feature.Length = thickness  # set thickness of Pad
+feature.Reversed = 1  # 0 didn't work
+# need to add R1.9 fillets manually
 
 doc.recompute()  # redraw
 Gui.SendMsgToActiveView("ViewFit")  # fit all
 doc.saveAs(fn)  # save file for the first time
 
 # end of CEM6-FH script
+
+# 5 degree bend
+# print(x)
+# [-2.337009904148057, -1.9, -1.4802824637891558, -1.04]
+# print(y)
+# [-10.089999999999996, -10.164953938762983, -15.08504606123701, -15.159999999999997]
